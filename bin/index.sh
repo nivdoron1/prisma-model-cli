@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Check if prisma-model-cli is installed (assumes local project usage)
+if ! npm list -g prisma-model-cli >/dev/null 2>&1 && ! npm list prisma-model-cli >/dev/null 2>&1; then
+  echo "📦 'prisma-model-cli' not found. Installing..."
+  npm install prisma-model-cli --save-dev
+else
+  echo "✅ 'prisma-model-cli' already installed"
+fi
+
 # Run Prisma generate and exit on failure
 echo "⚙️  Running Prisma generate..."
 if ! npx prisma generate; then
