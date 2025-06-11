@@ -5,7 +5,7 @@
     "lib": [
       "ES2020"
     ],
-    "rootDir": ".",
+    "rootDir": "src",
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
@@ -16,15 +16,10 @@
     "baseUrl": ".",
     "types": [
       "node"
-    ],
-    "paths": {
-      "prisma-model-cli/*": [
-        "./*"
-      ]
-    }
+    ]
   },
   "include": [
-    "./**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -1,9 +1,12 @@
 {
   "name": "prisma-model-cli",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Generate service/controller/routes for Prisma models",
   "bin": {
     "prismagen": "./bin/index.sh"
+  },
+  "scripts": {
+      "build": "tsc"
   },
   "keywords": [
     "prisma",

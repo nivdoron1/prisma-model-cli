@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.1.1"
+VERSION="1.1.2"
 
 # Determine the absolute path to this script directory (even when symlinked)
 SOURCE="${BASH_SOURCE[0]}"
@@ -19,8 +19,8 @@ function show_help {
   echo ""
   echo "Usage:"
   echo "  prismagen                 Launch interactive dialog to choose API structure"
-  echo "  prismagen --nestjs        Generate NestJS structure (runs run.ts)"
-  echo "  prismagen --express       Generate Express structure (runs prisma-model-cli.sh)"
+  echo "  prismagen --nestjs        Generate NestJS structure"
+  echo "  prismagen --express       Generate Express structure"
   echo "  prismagen --help          Show help"
   echo "  prismagen --version       Show version"
   echo ""
@@ -34,6 +34,16 @@ function run_express {
   fi
   chmod +x "$script"
   "$script"
+}
+
+function run_nestjs {
+  local entry="$ROOT_DIR/dist/run.js"
+  if [ ! -f "$entry" ]; then
+    echo "❌ Compiled run.js not found at: $entry"
+    echo "💡 Run 'npm run build' in the CLI project first."
+    exit 1
+  fi
+  node "$entry"
 }
 
 function show_dialog {
@@ -60,7 +70,7 @@ function show_dialog {
       ;;
     2)
       echo "🏗️  Generating NestJS structure..."
-      npx ts-node "$ROOT_DIR/run.ts"
+      run_nestjs
       ;;
     *)
       echo "❌ Invalid selection."
@@ -73,7 +83,7 @@ function show_dialog {
 case "$1" in
   --nestjs)
     echo "🏗️  Generating NestJS structure..."
-    npx ts-node "$ROOT_DIR/run.ts"
+    run_nestjs
     ;;
   --express)
     echo "📦 Running Prisma Model CLI for Node Express..."
