@@ -3,8 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { exit } from 'process';
 
-const SCHEMA_PATH = path.join(__dirname, './prisma/schema.prisma');
-const OUTPUT_BASE = path.join(__dirname, './models');
+const SCHEMA_PATH = path.join(process.cwd(), 'prisma/schema.prisma');
+const OUTPUT_BASE = path.join(process.cwd(), 'models');
+
 
 const schema = fs.readFileSync(SCHEMA_PATH, 'utf-8');
 const modelRegex = /model\s+(\w+)\s+{/g;

@@ -1,10 +1,16 @@
 #!/bin/bash
 set -e
 
-VERSION="1.0.8"
+VERSION="1.1.1"
 
-# Determine the absolute path to this script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Determine the absolute path to this script directory (even when symlinked)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
 ROOT_DIR="$SCRIPT_DIR/.."
 
 function show_help {
@@ -18,6 +24,16 @@ function show_help {
   echo "  prismagen --help          Show help"
   echo "  prismagen --version       Show version"
   echo ""
+}
+
+function run_express {
+  local script="$ROOT_DIR/prisma-model-cli.sh"
+  if [ ! -f "$script" ]; then
+    echo "❌ Could not find $script"
+    exit 1
+  fi
+  chmod +x "$script"
+  "$script"
 }
 
 function show_dialog {
@@ -40,8 +56,7 @@ function show_dialog {
   case $CHOICE in
     1)
       echo "📦 Running Prisma Model CLI for Node Express..."
-      chmod +x "$ROOT_DIR/prisma-model-cli.sh"
-      "$ROOT_DIR/prisma-model-cli.sh"
+      run_express
       ;;
     2)
       echo "🏗️  Generating NestJS structure..."
@@ -62,8 +77,7 @@ case "$1" in
     ;;
   --express)
     echo "📦 Running Prisma Model CLI for Node Express..."
-    chmod +x "$ROOT_DIR/prisma-model-cli.sh"
-    "$ROOT_DIR/prisma-model-cli.sh"
+    run_express
     ;;
   --help|-h)
     show_help
