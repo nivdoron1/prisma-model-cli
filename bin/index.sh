@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-VERSION="1.0.5"
+VERSION="1.0.8"
+
+# Determine the absolute path to this script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$SCRIPT_DIR/.."
 
 function show_help {
   echo ""
@@ -14,15 +18,9 @@ function show_help {
   echo "  prismagen --help          Show help"
   echo "  prismagen --version       Show version"
   echo ""
-  echo "Examples:"
-  echo "  prismagen"
-  echo "  prismagen --nestjs"
-  echo "  prismagen --express"
-  echo ""
 }
 
 function show_dialog {
-  # Show arrow-key navigable menu
   CHOICE=$(dialog --clear \
     --title "Choose API Structure" \
     --stdout \
@@ -32,7 +30,7 @@ function show_dialog {
     1 "Node Express (default)" \
     2 "NestJS")
 
-  clear  # Clear dialog UI leftovers
+  clear
 
   if [ $? -ne 0 ]; then
     echo "⚠️ No selection made. Defaulting to Node Express..."
@@ -42,12 +40,12 @@ function show_dialog {
   case $CHOICE in
     1)
       echo "📦 Running Prisma Model CLI for Node Express..."
-      chmod +x ./prisma-model-cli.sh
-      ./prisma-model-cli.sh
+      chmod +x "$ROOT_DIR/prisma-model-cli.sh"
+      "$ROOT_DIR/prisma-model-cli.sh"
       ;;
     2)
       echo "🏗️  Generating NestJS structure..."
-      npx ts-node run.ts
+      npx ts-node "$ROOT_DIR/run.ts"
       ;;
     *)
       echo "❌ Invalid selection."
@@ -56,16 +54,16 @@ function show_dialog {
   esac
 }
 
-# Handle CLI args or fallback to dialog
+# Handle CLI arguments
 case "$1" in
   --nestjs)
     echo "🏗️  Generating NestJS structure..."
-    npx ts-node run.ts
+    npx ts-node "$ROOT_DIR/run.ts"
     ;;
   --express)
     echo "📦 Running Prisma Model CLI for Node Express..."
-    chmod +x ./prisma-model-cli.sh
-    ./prisma-model-cli.sh
+    chmod +x "$ROOT_DIR/prisma-model-cli.sh"
+    "$ROOT_DIR/prisma-model-cli.sh"
     ;;
   --help|-h)
     show_help

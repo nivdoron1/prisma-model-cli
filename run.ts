@@ -29,7 +29,7 @@ console.log(`🔍 Found models: ${modelNames.join(', ')}`);
 
 modelNames.forEach((modelName) => {
   const folderName = modelName.toLowerCase();
-  const folderPath = path.join(OUTPUT_BASE, modelName);
+  const folderPath = path.join(OUTPUT_BASE, folderName);
 
   if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath);
 
