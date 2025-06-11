@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { exit } from 'process';
 
-const SCHEMA_PATH = path.join(process.cwd(), 'prisma/schema.prisma');
+const SCHEMA_PATH = path.join('./prisma/schema.prisma');
 const OUTPUT_BASE = path.join(process.cwd(), 'models');
 
 
