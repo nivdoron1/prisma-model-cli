@@ -1,0 +1,28 @@
+{
+  "name": "prisma-model-cli",
+  "version": "1.0.1",
+  "description": "Generate service/controller/routes for Prisma models",
+  "bin": {
+    "prismagen": "./bin/index.sh"
+  },
+  "keywords": [
+    "prisma",
+    "cli",
+    "generator",
+    "typescript"
+  ],
+  "exports": {
+    "./services/db/dbService": "./services/db/dbService.ts",
+    "./controllers/baseController": "./controllers/baseController.ts",
+    "./routes/createBaseRoutes": "./routes/createBaseRoutes.ts"
+  },
+  "author": "Niv Doron",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^6.9.0",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3"
+  }
+}
