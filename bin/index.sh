@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.1.5"
+VERSION="1.1.6"
 
 # Determine the absolute path to this script directory (even when symlinked)
 SOURCE="${BASH_SOURCE[0]}"
