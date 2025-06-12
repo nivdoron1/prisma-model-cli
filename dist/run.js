@@ -73,32 +73,73 @@ function generateController(model, ext) {
   Put,
   Delete,
 } from '@nestjs/common';
-${importType} { ApiTags, ApiOperation } from '@nestjs/swagger';
+${importType} {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiBadRequestResponse,
+  ApiProperty
+} from '@nestjs/swagger';
 ${importType} { ${model}Service } from './${lcModel}.service';
 ${importType} { Create${model}Dto } from './dto/create-${lcModel}.dto';
 ${importType} { Update${model}Dto } from './dto/update-${lcModel}.dto';
 ${importType} { ${model}, Prisma } from '${START_ROUTE}generated/prisma';
+${importType} { ${model}BaseDto } from './dto/base-${lcModel}.dto';
 ${importType} { SortOptions } from 'prisma-model-cli/services/db/types';
 
+class ${model}PaginationMeta {
+  @ApiProperty()
+  page: number;
+
+  @ApiProperty()
+  limit: number;
+
+  @ApiProperty()
+  total: number;
+
+  @ApiProperty()
+  totalPages: number;
+
+  @ApiProperty()
+  hasNext: boolean;
+
+  @ApiProperty()
+  hasPrev: boolean;
+}
+
+class Paginated${model}Response {
+  @ApiProperty({ type: () => [${model}BaseDto] })
+  data: ${model}BaseDto[];
+
+  @ApiProperty({ type: () => ${model}PaginationMeta })
+  pagination: ${model}PaginationMeta;
+}
+  
 @ApiTags('${model}')
 @Controller('${lcModel}s')
 ${exportSyntax} ${model}Controller {
   constructor(private readonly service: ${model}Service) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new ${model}' , operationId: '${lcModel}_create' } )
+  @ApiOperation({ summary: 'Create a new ${model}', operationId: '${lcModel}_create' })
+  @ApiOkResponse({ description: '${model} created successfully', type: ${model}BaseDto })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   create(@Body() data: Create${model}Dto) {
     return this.service.create(data);
   }
 
   @Post('bulk')
-  @ApiOperation({ summary: 'Create multiple ${model}s' , operationId: '${lcModel}_createMany' } )
+  @ApiOperation({ summary: 'Create multiple ${model}s', operationId: '${lcModel}_createMany' })
+  @ApiOkResponse({ description: '${model}s created successfully', type: [${model}BaseDto] })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   createMany(@Body() data: Create${model}Dto[]) {
     return this.service.createMany(data);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get paginated list of ${model}s' , operationId: '${lcModel}_findAll' } )
+  @ApiOperation({ summary: 'Get paginated list of ${model}s', operationId: '${lcModel}_findAll' })
+  @ApiOkResponse({ description: 'List fetched successfully', type: Paginated${model}Response })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
@@ -108,10 +149,10 @@ ${exportSyntax} ${model}Controller {
     @Query('select') select?: Prisma.${model}Select,
   ) {
     return this.service.findManyWithPagination({
-      where: where ? where : undefined,
-      sort: sort ? sort : undefined,
-      include: include ? include : undefined,
-      select: select ? select : undefined,
+      where: where || undefined,
+      sort: sort || undefined,
+      include: include || undefined,
+      select: select || undefined,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -120,25 +161,33 @@ ${exportSyntax} ${model}Controller {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a single ${model} by ID', operationId: '${lcModel}_findOne' } )
+  @ApiOperation({ summary: 'Get a single ${model} by ID', operationId: '${lcModel}_findOne' })
+  @ApiOkResponse({ description: '${model} fetched successfully', type: ${model}BaseDto })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   findOne(@Param('id') id: string) {
     return this.service.findById(id);
   }
 
-  @Post('find-one')
-  @ApiOperation({ summary: 'Find one ${model} by custom where clause' , operationId: '${lcModel}_findOneCustom' } )
-  findOneCustom(@Body() where: Record<string, unknown>) {
+  @Get('find-one')
+  @ApiOperation({ summary: 'Find one ${model} by custom where clause', operationId: '${lcModel}_findOneCustom' })
+  @ApiOkResponse({ description: 'Result fetched successfully', type: ${model}BaseDto })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  findOneCustom(@Query() where: Record<string, unknown>) {
     return this.service.findOne(where);
   }
 
-  @Post('find')
-  @ApiOperation({ summary: 'Find many ${model}s by custom query', operationId: '${lcModel}_findMany' } )
-  findMany(@Body() options: Record<string, unknown>) {
+  @Get('find')
+  @ApiOperation({ summary: 'Find many ${model}s by custom query', operationId: '${lcModel}_findMany' })
+  @ApiOkResponse({ description: 'Results fetched successfully', type: [${model}BaseDto] })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  findMany(@Query() options: Record<string, unknown>) {
     return this.service.findMany(options);
   }
 
   @Post('upsert')
-  @ApiOperation({ summary: 'Upsert a ${model}' , operationId: '${lcModel}_upsert' } )
+  @ApiOperation({ summary: 'Upsert a ${model}', operationId: '${lcModel}_upsert' })
+  @ApiOkResponse({ description: '${model} upserted successfully', type: ${model}BaseDto })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   upsert(@Body() body: {
     where: Record<string, unknown>;
     create: Create${model}Dto;
@@ -148,13 +197,17 @@ ${exportSyntax} ${model}Controller {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update a ${model} by ID' , operationId: '${lcModel}_update' } )
+  @ApiOperation({ summary: 'Update a ${model} by ID', operationId: '${lcModel}_update' })
+  @ApiOkResponse({ description: '${model} updated successfully', type: ${model}BaseDto })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   update(@Param('id') id: string, @Body() data: Update${model}Dto) {
     return this.service.updateById(id, data);
   }
 
   @Post('update-one')
-  @ApiOperation({ summary: 'Update one ${model} by custom where clause' , operationId: '${lcModel}_updateOne' } )
+  @ApiOperation({ summary: 'Update one ${model} by custom where clause', operationId: '${lcModel}_updateOne' })
+  @ApiOkResponse({ description: '${model} updated successfully', type: ${model}BaseDto })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   updateOne(@Body() body: {
     where: Record<string, unknown>;
     data: Update${model}Dto;
@@ -163,7 +216,9 @@ ${exportSyntax} ${model}Controller {
   }
 
   @Post('update-many')
-  @ApiOperation({ summary: 'Update many ${model}s' , operationId: '${lcModel}_updateMany' } )
+  @ApiOperation({ summary: 'Update many ${model}s', operationId: '${lcModel}_updateMany' })
+  @ApiOkResponse({ description: '${model}s updated successfully', type: [${model}BaseDto] })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   updateMany(@Body() body: {
     where: Record<string, unknown>;
     data: Update${model}Dto;
@@ -172,49 +227,65 @@ ${exportSyntax} ${model}Controller {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a ${model} by ID' , operationId: '${lcModel}_remove' } )
+  @ApiOperation({ summary: 'Delete a ${model} by ID', operationId: '${lcModel}_remove' })
+  @ApiOkResponse({ description: '${model} deleted successfully', type: ${model}BaseDto })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   remove(@Param('id') id: string) {
     return this.service.deleteById(id);
   }
 
   @Post('delete-one')
-  @ApiOperation({ summary: 'Delete one ${model} by custom where clause', operationId: '${lcModel}_deleteOne' } )
+  @ApiOperation({ summary: 'Delete one ${model} by custom where clause', operationId: '${lcModel}_deleteOne' })
+  @ApiOkResponse({ description: '${model} deleted successfully', type: ${model}BaseDto })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   deleteOne(@Body() where: Record<string, unknown>) {
     return this.service.deleteOne(where);
   }
 
   @Post('delete-many')
-  @ApiOperation({ summary: 'Delete many ${model}s by filter' , operationId: '${lcModel}_deleteMany' } )
+  @ApiOperation({ summary: 'Delete many ${model}s by filter', operationId: '${lcModel}_deleteMany' })
+  @ApiOkResponse({ description: '${model}s deleted successfully', type: [${model}BaseDto] })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   deleteMany(@Body() where: Record<string, unknown>) {
     return this.service.deleteMany(where);
   }
 
   @Post('count')
-  @ApiOperation({ summary: 'Count ${model}s matching a filter' , operationId: '${lcModel}_count' } )
+  @ApiOperation({ summary: 'Count ${model}s matching a filter', operationId: '${lcModel}_count' })
+  @ApiOkResponse({ description: 'Count returned successfully', type: Number })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   count(@Body() where: Record<string, unknown>) {
     return this.service.count(where);
   }
 
   @Post('exists')
-  @ApiOperation({ summary: 'Check if ${model} exists by filter' , operationId: '${lcModel}_exists' } )
+  @ApiOperation({ summary: 'Check if ${model} exists by filter', operationId: '${lcModel}_exists' })
+  @ApiOkResponse({ description: 'Existence check returned successfully', type: Boolean })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   exists(@Body() where: Record<string, unknown>) {
     return this.service.exists(where);
   }
 
   @Post('filters')
-  @ApiOperation({ summary: 'Advanced filter for ${model}s' , operationId: '${lcModel}_findWithFilters' } )
+  @ApiOperation({ summary: 'Advanced filter for ${model}s', operationId: '${lcModel}_findWithFilters' })
+  @ApiOkResponse({ description: 'Filters applied successfully', type: [${model}BaseDto] })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   findWithFilters(@Body() filters: Record<string, unknown>) {
     return this.service.findWithFilters(filters);
   }
 
   @Post('sql/execute')
-  @ApiOperation({ summary: 'Execute raw SQL (dangerous)' , operationId: '${lcModel}_executeRaw' } )
+  @ApiOperation({ summary: 'Execute raw SQL (dangerous)', operationId: '${lcModel}_executeRaw' })
+  @ApiOkResponse({ description: 'Query executed successfully', type: String })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   executeRaw(@Body() body: { query: string }) {
     return this.service.executeRaw(body.query);
   }
 
   @Post('sql/query')
-  @ApiOperation({ summary: 'Run raw SQL and return results' , operationId: '${lcModel}_queryRaw' } )
+  @ApiOperation({ summary: 'Run raw SQL and return results', operationId: '${lcModel}_queryRaw' })
+  @ApiOkResponse({ description: 'Query result returned successfully', type: Object })
+  @ApiBadRequestResponse({ description: 'Bad request', type: String })
   queryRaw(@Body() body: { query: string }) {
     return this.service.queryRaw(body.query);
   }
@@ -286,7 +357,99 @@ function mapPrismaTypeToTs(prismaType: string): string {
   if (isArray) return `${tsType}[]`;
   return tsType;
 }*/
-function mapPrismaTypeToTs(fieldName, modelName) {
+/*
+function mapPrismaTypeToTs(fieldName: string, modelName: string): string {
+  return `Prisma.${modelName}CreateInput['${fieldName}']`;
+}
+
+
+function generateDtos(model: string, ext: string) {
+  const lcModel = model.toLowerCase();
+  const baseClass = `${model}BaseDto`;
+  const createClass = `Create${model}Dto`;
+  const updateClass = `Update${model}Dto`;
+
+  const schema = fs.readFileSync(SCHEMA_PATH, 'utf-8');
+  const modelRegex = new RegExp(`model\\s+${model}\\s+{([\\s\\S]*?)}`, 'm');
+  const match = modelRegex.exec(schema);
+
+  if (!match) throw new Error(`Model ${model} not found in schema.prisma`);
+
+  const body = match[1].trim();
+  const lines = body
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('//') && !line.startsWith('@@'));
+
+  const requiredFields: Set<string> = new Set();
+  const relationMap: Record<string, string> = {};
+  const foreignKeyFields: Set<string> = new Set();
+
+  // First pass: detect relations and required fields
+  for (const line of lines) {
+    const [name, , ...rest] = line.split(/\s+/);
+
+    if (line.includes('@relation')) {
+      relationMap[name] = line;
+
+      // Extract fields = [...] from @relation
+      const fieldsMatch = line.match(/fields:\s*\[(.*?)\]/);
+      if (fieldsMatch) {
+        const fkFields = fieldsMatch[1].split(',').map((f) => f.trim());
+        fkFields.forEach((fk) => foreignKeyFields.add(fk));
+      }
+    }
+
+    if (!line.includes('?')) requiredFields.add(name);
+  }
+
+  const fieldLines = lines
+    .map((line) => {
+      const [name, typeRaw] = line.split(/\s+/);
+
+      if (foreignKeyFields.has(name)) {
+        return null; // Skip foreign key scalars tied to a relation
+      }
+
+      const tsType = mapPrismaTypeToTs(name, model);
+      const isRequired = requiredFields.has(name);
+      const postfix = isRequired ? '!' : '?';
+
+      if (relationMap[name]) {
+        return `  @ApiProperty({ type: () => Object })\n  ${name}${postfix}: ${tsType};`;
+      }
+
+      return `  @ApiProperty()\n  ${name}${postfix}: ${tsType};`;
+    })
+    .filter(Boolean)
+    .join('\n\n');
+
+  const baseDto = `import { ApiProperty } from '@nestjs/swagger';
+import { Prisma } from '${START_ROUTE}../generated/prisma';
+
+export class ${baseClass} {
+${fieldLines}
+}
+`;
+
+  const createDto = `import { ${baseClass} } from './base-${lcModel}.dto';
+
+export class ${createClass} extends ${baseClass} {}
+`;
+
+  const updateDto = `import { PartialType } from '@nestjs/swagger';
+import { ${createClass} } from './create-${lcModel}.dto';
+
+export class ${updateClass} extends PartialType(${createClass}) {}
+`;
+
+  return { baseDto, createDto, updateDto };
+}
+*/
+function mapPrismaTypeToTs(fieldName, modelName, isRelation) {
+    if (isRelation) {
+        return `${modelName}CreateInput['${fieldName}']`;
+    }
     return `Prisma.${modelName}CreateInput['${fieldName}']`;
 }
 function generateDtos(model, ext) {
@@ -307,12 +470,10 @@ function generateDtos(model, ext) {
     const requiredFields = new Set();
     const relationMap = {};
     const foreignKeyFields = new Set();
-    // First pass: detect relations and required fields
     for (const line of lines) {
-        const [name, , ...rest] = line.split(/\s+/);
+        const [name] = line.split(/\s+/);
         if (line.includes('@relation')) {
             relationMap[name] = line;
-            // Extract fields = [...] from @relation
             const fieldsMatch = line.match(/fields:\s*\[(.*?)\]/);
             if (fieldsMatch) {
                 const fkFields = fieldsMatch[1].split(',').map((f) => f.trim());
@@ -322,29 +483,43 @@ function generateDtos(model, ext) {
         if (!line.includes('?'))
             requiredFields.add(name);
     }
-    const fieldLines = lines
-        .map((line) => {
-        const [name, typeRaw] = line.split(/\s+/);
-        if (foreignKeyFields.has(name)) {
-            return null; // Skip foreign key scalars tied to a relation
-        }
-        const tsType = mapPrismaTypeToTs(name, model);
+    let usesPrisma = false;
+    const imports = [];
+    const fieldLines = [];
+    for (const line of lines) {
+        const [name, typeRawRaw] = line.split(/\s+/);
+        if (foreignKeyFields.has(name))
+            continue;
+        const typeRaw = typeRawRaw.replace('?', '');
+        const isRelation = Boolean(relationMap[name]);
         const isRequired = requiredFields.has(name);
         const postfix = isRequired ? '!' : '?';
-        if (relationMap[name]) {
-            return `  @ApiProperty({ type: () => Object })\n  ${name}${postfix}: ${tsType};`;
+        const tsType = `Prisma.${model}CreateInput['${name}']`;
+        if (tsType.includes('Prisma.'))
+            usesPrisma = true;
+        if (isRelation) {
+            const relatedModel = capitalize(typeRaw.replace(/\[\]/g, ''));
+            const relatedDto = `${relatedModel}BaseDto`;
+            const importPath = `../../${relatedModel.toLowerCase()}/dto/base-${relatedModel.toLowerCase()}.dto`;
+            if (relatedModel !== model) {
+                imports.push(`import { ${relatedDto} } from '${importPath}';`);
+            }
+            fieldLines.push(`  @ApiProperty({ type: () => ${relatedDto} })\n  ${name}${postfix}: ${tsType};`);
         }
-        return `  @ApiProperty()\n  ${name}${postfix}: ${tsType};`;
-    })
-        .filter(Boolean)
-        .join('\n\n');
-    const baseDto = `import { ApiProperty } from '@nestjs/swagger';
-import { Prisma } from '${START_ROUTE}../generated/prisma';
-
-export class ${baseClass} {
-${fieldLines}
-}
-`;
+        else {
+            fieldLines.push(`  @ApiProperty()\n  ${name}${postfix}: ${tsType};`);
+        }
+    }
+    const baseDtoLines = [
+        `import { ApiProperty } from '@nestjs/swagger';`,
+        usesPrisma ? `import { Prisma } from '${START_ROUTE}../generated/prisma';` : null,
+        ...new Set(imports),
+        '',
+        `export class ${baseClass} {`,
+        ...fieldLines,
+        `}`,
+    ].filter(Boolean);
+    const baseDto = baseDtoLines.join('\n');
     const createDto = `import { ${baseClass} } from './base-${lcModel}.dto';
 
 export class ${createClass} extends ${baseClass} {}
@@ -394,6 +569,54 @@ function capitalize(str) {
         .join('');
 }
 generateAppModule();
+function generateSwaggerConfigFile() {
+    const content = `// src/swagger.ts
+import { INestApplication } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+
+interface SwaggerOptions {
+  title?: string;
+  description?: string;
+  version?: string;
+  serverUrl?: string;
+  serverName?: string;
+}
+
+export function setupSwagger(
+  app: INestApplication,
+  options: SwaggerOptions = {}
+): void {
+  const {
+    title = 'My API',
+    description = 'API documentation for My App',
+    version = '1.0',
+    serverUrl = 'http://localhost:3000/',
+    serverName = 'Local development server',
+  } = options;
+
+  const config = new DocumentBuilder()
+    .setTitle(title)
+    .setDescription(description)
+    .setVersion(version)
+    .addServer(serverUrl, serverName)
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
+}
+`;
+    const filePath = path_1.default.join('src', 'swagger.ts');
+    fs_1.default.mkdirSync(path_1.default.dirname(filePath), { recursive: true });
+    fs_1.default.writeFileSync(filePath, content);
+    console.log('✅ Swagger configuration file generated at src/swagger.ts');
+}
+// 🧠 Skip generation if --no-swagger flag is passed
+if (!process.argv.includes('--no-swagger')) {
+    generateSwaggerConfigFile();
+}
+else {
+    console.log('🚫 Skipping Swagger generation (--no-swagger flag detected)');
+}
 // Run ESLint fix in the output directory
 console.log('🧹 Running ESLint fix...');
 try {

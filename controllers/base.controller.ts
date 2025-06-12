@@ -1,4 +1,5 @@
 import { GenericPrismaService } from "../services/db/dbService";
+import { PaginatedResult } from "../services/db/types";
 
 export abstract class BaseController<
     T extends Record<string, unknown>,
@@ -30,7 +31,7 @@ export abstract class BaseController<
         return this.service.findMany();
     }
 
-    async findManyWithPagination(page: number, limit: number) {
+    async findManyWithPagination(page: number, limit: number): Promise<PaginatedResult<T>> {
         return this.service.findManyWithPagination({ pagination: { page, limit } });
     }
 

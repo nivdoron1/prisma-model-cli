@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-VERSION="1.1.7"
+VERSION="1.2.0"
 
-# Determine the absolute path to this script directory (even when symlinked)
+# Determine absolute script path (even when symlinked)
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
   DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
@@ -18,12 +18,14 @@ function show_help {
   echo "📦 prismagen v$VERSION - Prisma Model Generator CLI"
   echo ""
   echo "Usage:"
-  echo "  prismagen                         Launch interactive dialog to choose API structure"
-  echo "  prismagen --nestjs                Generate NestJS structure (TypeScript)"
-  echo "  prismagen --express               Generate Express structure (TypeScript)"
-  echo "  prismagen --express --output-js   Generate Express structure (JavaScript)"
-  echo "  prismagen --help                  Show help"
-  echo "  prismagen --version               Show version"
+  echo "  prismagen                           Launch interactive dialog to choose API structure"
+  echo "  prismagen --nestjs                  Generate NestJS structure (TypeScript)"
+  echo "  prismagen --nestjs --no-swagger     Skip Swagger setup in NestJS"
+  echo "  prismagen --express                 Generate Express structure (TypeScript)"
+  echo "  prismagen --express --output-js     Generate Express structure (JavaScript)"
+  echo "  prismagen generate swagger          Generate NestJS + Swagger UI TypeScript client"
+  echo "  prismagen --help                    Show help"
+  echo "  prismagen --version                 Show version"
   echo ""
 }
 
@@ -37,8 +39,12 @@ function ensure_prisma_model_cli {
 }
 
 function run_express {
-  ensure_prisma_model_cli
+  if [[ " $@ " =~ " --no-swagger " ]]; then
+    echo "❌ The --no-swagger flag is only supported with --nestjs"
+    exit 1
+  fi
 
+  ensure_prisma_model_cli
   local script="$ROOT_DIR/prisma-model-cli.sh"
   if [ ! -f "$script" ]; then
     echo "❌ Could not find $script"
@@ -50,15 +56,23 @@ function run_express {
 
 function run_nestjs {
   ensure_prisma_model_cli
-
   local entry="$ROOT_DIR/dist/run.js"
   if [ ! -f "$entry" ]; then
     echo "❌ Compiled run.js not found at: $entry"
     echo "💡 Run 'npm run build' in the CLI project first."
     exit 1
   fi
-
   node "$entry" "$@"
+}
+
+function run_swagger_ui {
+  local swaggerScript="$ROOT_DIR/swagger-ui.sh"
+  if [ ! -f "$swaggerScript" ]; then
+    echo "❌ Could not find $swaggerScript"
+    exit 1
+  fi
+  chmod +x "$swaggerScript"
+  "$swaggerScript"
 }
 
 function show_dialog {
@@ -110,6 +124,16 @@ case "$1" in
     echo "📦 Running Prisma Model CLI for Node Express..."
     shift
     run_express "$@"
+    ;;
+  generate)
+    if [[ "$2" == "swagger" ]]; then
+      echo "🛠️  Generating NestJS structure and Swagger UI client..."
+      run_nestjs
+      run_swagger_ui
+    else
+      echo "❌ Unknown generate command: $2"
+      exit 1
+    fi
     ;;
   --help|-h)
     show_help
