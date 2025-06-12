@@ -1,0 +1,31 @@
+# Ignore source files
+src/
+*.ts
+!index.ts
+
+# Ignore dev/test/config files
+node_modules/
+package-lock.json
+yarn.lock
+tsconfig*.json
+.eslintrc*
+.prettierrc*
+.vscode/
+.env
+.env.*
+
+# Ignore Git and CI/CD stuff
+.git/
+.github/
+.gitignore
+.gitattributes
+.npmignore
+
+# Ignore test and docs (if any)
+test/
+tests/
+docs/
+
+# Ignore everything else by default (optional, if using "files" in package.json)
+*~
+.DS_Store
