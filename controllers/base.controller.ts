@@ -1,4 +1,4 @@
-import { GenericPrismaService } from "prisma-model-cli/services/db/dbService";
+import { GenericPrismaService } from "../services/db/dbService";
 
 export abstract class BaseController<
     T extends Record<string, unknown>,

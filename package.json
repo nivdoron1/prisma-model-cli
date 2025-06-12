@@ -1,12 +1,16 @@
 {
   "name": "prisma-model-cli",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Generate service/controller/routes for Prisma models",
   "bin": {
     "prismagen": "./bin/index.sh"
   },
+  "main": "./index.js",
+  "types": "./index.ts",
   "scripts": {
-      "build": "tsc"
+    "build": "tsc",
+    "test": "npm unlink -g prisma-model-cli && npm run build && npm link",
+    "deploy": "npm unlink -g prisma-model-cli && npm run build && npm publish"
   },
   "keywords": [
     "prisma",
@@ -15,14 +19,40 @@
     "typescript"
   ],
   "exports": {
-    "./services/db/dbService": "./services/db/dbService.ts",
-    "./controllers/baseController": "./controllers/baseController.ts",
-    "./routes/createBaseRoutes": "./routes/createBaseRoutes.ts"
+    ".": {
+      "require": "./index.js",
+      "import": "./index.ts"
+    },
+    "./services/db/dbService": {
+      "require": "./services/db/dbService.js",
+      "import": "./services/db/dbService.ts"
+    },
+    "./controllers/baseController": {
+      "require": "./controllers/baseController.js",
+      "import": "./controllers/baseController.ts"
+    },
+    "./routes/createBaseRoutes": {
+      "require": "./routes/createBaseRoutes.js",
+      "import": "./routes/createBaseRoutes.ts"
+    }
   },
+  "files": [
+    "index.js",
+    "index.ts",
+    "controllers/",
+    "routes/",
+    "services/",
+    "lib/",
+    "dist/",
+    "bin/",
+    "prisma-model-cli.sh"
+  ],
   "author": "Niv Doron",
   "license": "MIT",
   "dependencies": {
+    "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.9.0",
+    "swagger-ui-express": "^5.0.1",
     "typescript": "^5.8.3"
   },
   "devDependencies": {

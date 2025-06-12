@@ -1,149 +1,139 @@
-# Prisma Model CLI Generator 🛠️
-
-A lightweight CLI tool to auto-generate a scalable folder structure for your Prisma models using TypeScript. It creates boilerplate files for each model, including:
-
-- `service.ts` – Service layer based on a generic Prisma service
-- `controller.ts` – Controller extending a base controller
-- `routes.ts` – REST API routes using Express
-- `<Model>.ts` – Wrapper class exposing service, controller, and routes
-- `index.ts` – Centralized exports for all models
+Here's a clean and professional `README.md` tailored for your **`prismagen` CLI** project:
 
 ---
 
-## 📦 Generated Structure
+# 📦 PrismaGen CLI
 
-```
+**PrismaGen** is a flexible CLI tool that auto-generates a scalable API structure from your `schema.prisma` file.
 
-models/
-├── index.ts
-├── User/
-│   ├── User.ts
-│   ├── controller.ts
-│   ├── routes.ts
-│   └── service.ts
-├── Store/
-│   ├── Store.ts
-│   ├── controller.ts
-│   ├── routes.ts
-│   └── service.ts
-├── Transaction/
-│   ├── Transaction.ts
-│   ├── controller.ts
-│   ├── routes.ts
-│   └── service.ts
-├── TransactionProduct/
-│   ├── TransactionProduct.ts
-│   ├── controller.ts
-│   ├── routes.ts
-│   └── service.ts
-...
+Supports:
 
-```
+* ✅ NestJS (TypeScript)
+* ✅ Express (TypeScript or JavaScript)
 
 ---
 
 ## 🚀 Installation
 
-1. **Clone or download the CLI script:**
+```bash
+npm install -g prisma-model-cli
+```
 
-   ```bash
-   git clone https://github.com/your-org/prisma-model-cli.git
-   cd prisma-model-cli
+Or install locally as a dev dependency:
 
-````
-
-2. **Make it executable:**
-
-   ```bash
-   chmod +x prisma-model-cli
-   ```
-
-3. **(Optional) Add to global path:**
-
-   ```bash
-   sudo ln -s $(pwd)/prisma-model-cli /usr/local/bin/prismagen
-   ```
+```bash
+npm install --save-dev prisma-model-cli
+```
 
 ---
 
-## ⚙️ Usage
-
-Make sure your Prisma schema is defined at `./prisma/schema.prisma`.
-
-Run the CLI:
-
-```bash
-./prisma-model-cli
-```
-
-Or globally if symlinked:
+## 🔧 Usage
 
 ```bash
 prismagen
 ```
 
-The script will:
+You can also use flags to skip the interactive dialog:
 
-* ✅ Parse all `model` declarations in `schema.prisma`
-* ✅ Create a folder under `models/<ModelName>/` for each model
-* ✅ Generate `service.ts`, `controller.ts`, `routes.ts`, and `<Model>.ts`
-* ✅ Add an export in `models/index.ts` (only if not already present)
-* ⚠️ Skip files if they already exist to prevent overwriting
+### ▶️ CLI Options
+
+| Command                           | Description                                 |
+| --------------------------------- | ------------------------------------------- |
+| `prismagen`                       | Launch interactive API structure dialog     |
+| `prismagen --express`             | Generate Express API structure (TypeScript) |
+| `prismagen --express --output-js` | Generate Express API structure (JavaScript) |
+| `prismagen --nestjs`              | Generate NestJS API structure (TypeScript)  |
+| `prismagen --help` or `-h`        | Show CLI help                               |
+| `prismagen --version` or `-v`     | Show installed version                      |
 
 ---
 
-## 🧪 Example Output for Model `TransactionProduct`
+## 📁 Output Structure
 
-```ts
-// models/TransactionProduct/TransactionProduct.ts
-import TransactionProductService from './service';
-import TransactionProductController from './controller';
-import TransactionProductRoutes from './routes';
+Depending on your schema, PrismaGen will create folders under `/models/<model-name>/` containing:
 
-export default class TransactionProducts {
-  public service = TransactionProductService;
-  public controller = TransactionProductController;
-  public routes = TransactionProductRoutes;
+* `controller.ts` / `controller.js`
+* `service.ts` / `service.js`
+* `dto/` (for NestJS only)
+* `routes/` (for Express)
+* `baseController`, `baseService`, and shared types
 
-  constructor() {}
-}
+Example:
+
+```
+models/
+  └── user/
+      ├── user.controller.ts
+      ├── user.service.ts
+      ├── dto/
+      │   ├── create-user.dto.ts
+      │   └── update-user.dto.ts
 ```
 
 ---
 
-## 📄 Requirements
+## ⚙️ Prerequisites
 
-* Node.js + TypeScript project
-* Prisma properly set up
-* Base classes:
+Ensure your project has:
 
-  * `GenericPrismaService`
-  * `BaseController`
-  * `createBaseRoutes`
+* Prisma installed and set up:
 
----
+  ```bash
+  npm install prisma @prisma/client
+  npx prisma init
+  ```
 
-## 🧠 Notes
+* A valid `schema.prisma` in `/prisma/schema.prisma`
 
-* The CLI is **idempotent**: It won't overwrite existing files.
-* You can modify the script to support `--force` or custom schema paths if needed.
+Run:
 
----
-
-## 📬 Contribute
-
-PRs welcome! Add features like:
-
-* Custom template folders
-* ESM/TS compatibility flags
-* Integration with code formatters
-
----
-
-## 🪪 License
-
-MIT © 2025 Your Name / Org
-
+```bash
+npx prisma generate
 ```
 
-Let me know if you'd like a Hebrew version, CLI flags like `--model User`, `--force`, or auto-detection of `tsconfig.json` paths.
+---
+
+## 🧠 How It Works
+
+1. Parses all models from your Prisma schema.
+2. Generates base CRUD logic (`BaseController`, `GenericPrismaService`).
+3. Outputs language-specific files based on the selected mode.
+
+---
+
+## 🛠 Dev Setup (if modifying CLI)
+
+1. Clone this repo
+
+2. Build the CLI:
+
+   ```bash
+   npm install
+   npm run build
+   ```
+
+3. Link it globally to use `prismagen` from anywhere:
+
+   ```bash
+   npm link
+   ```
+
+---
+
+## 🧩 Future Features
+
+* Support for custom middleware
+* Soft deletes
+* Swagger docs out of the box
+* Authentication scaffolding (JWT, session-based)
+
+---
+
+## 📬 Issues / Contributions
+
+Open issues or PRs on [GitHub](https://github.com/YOUR-REPO-LINK)
+We welcome contributions!
+
+---
+
+Let me know if you'd like me to auto-generate the same readme with your GitHub repo and license block included!

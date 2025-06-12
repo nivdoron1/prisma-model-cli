@@ -1,10 +1,8 @@
-import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { BulkResult, PaginationOptions, SortOptions, PaginatedResult } from './types';
 import prisma from '../../lib/db';
 
 // Generic Prisma Service Class
-@Injectable()
 export class GenericPrismaService<
     T extends Record<string, unknown>,
     TCreateInput extends Record<string, unknown>,
