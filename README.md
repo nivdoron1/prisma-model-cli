@@ -16,10 +16,10 @@ Supports:
 npm install -g prisma-model-cli
 ````
 
-Or install locally as a dev dependency:
+install locally:
 
 ```bash
-npm install --save-dev prisma-model-cli
+npm install prisma-model-cli
 ```
 
 ---
@@ -154,4 +154,3 @@ npx prisma generate
 Open issues or PRs on [GitHub](https://github.com/nivdoron1/prisma-model-cli.git)
 
 We welcome contributions!
-
