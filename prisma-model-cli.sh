@@ -113,7 +113,7 @@ class ${model}Controller extends BaseController {
 
 module.exports = new ${model}Controller();" > "$controller_path"
     else
-      echo "import ${lower_model}Service from './service';
+      echo "import { ${lower_model}Service } from './service';
 import { Prisma, $model } from '../../generated/prisma';
 import { BaseController } from 'prisma-model-cli';
 
@@ -184,9 +184,9 @@ class ${model}s {
 
 module.exports = ${model}s;" > "$model_entry"
     else
-      echo "import ${model}Service from './service';
-import ${model}Controller from './controller';
-import ${model}Routes from './routes';
+      echo "import { ${model}Service } from './service';
+import { ${model}Controller } from './controller';
+import { ${model}Routes } from './routes';
 
 export default class ${model}s {
   public service = ${model}Service;
