@@ -13,11 +13,11 @@ done
 if [ "$EXT" == "js" ]; then
   IMPORT_ROUTER="const { Router } = require('express');"
   EXPORT_DEFAULT="module.exports ="
-  BASE_PATH="../../dist"
+  BASE_PATH="../../../"
 else
   IMPORT_ROUTER="import { Router } from 'express';"
   EXPORT_DEFAULT="export default"
-  BASE_PATH="../../"
+  BASE_PATH="../../../"
 fi
 
 # Check if prisma-model-cli is installed
@@ -38,7 +38,7 @@ fi
 echo "✅ Prisma client generated successfully."
 
 PRISMA_SCHEMA="./prisma/schema.prisma"
-OUTPUT_DIR="./models"
+OUTPUT_DIR="./src/models"
 INDEX_FILE="$OUTPUT_DIR/index.$EXT"
 
 mkdir -p "$OUTPUT_DIR"

@@ -4,9 +4,10 @@ import path from 'path';
 
 
 const ext = 'ts';
-
+const START_ROUTE = '../../../';
 const SCHEMA_PATH = path.join('prisma/schema.prisma');
-const OUTPUT_BASE = path.join(process.cwd(), 'models');
+const OUTPUT_BASE = path.join(process.cwd(), './src/models');
+const OUTPUT_BASE_SRC = path.join(process.cwd(), './src');
 
 if (!fs.existsSync(SCHEMA_PATH)) {
   console.error(`❌ schema.prisma not found at ${SCHEMA_PATH}`);
@@ -47,60 +48,83 @@ modelNames.forEach((modelName) => {
   const moduleFile = path.join(folderPath, `${folderName}.module.${ext}`);
 
   const { baseDto, createDto, updateDto } = generateDtos(modelName, ext);
+
+  // DTOs are always overwritten
   fs.writeFileSync(path.join(dtoFolder, `base-${folderName}.dto.${ext}`), baseDto);
   fs.writeFileSync(path.join(dtoFolder, `create-${folderName}.dto.${ext}`), createDto);
   fs.writeFileSync(path.join(dtoFolder, `update-${folderName}.dto.${ext}`), updateDto);
 
-  fs.writeFileSync(controllerFile, generateController(modelName, ext));
-  fs.writeFileSync(serviceFile, generateService(modelName, ext));
-  fs.writeFileSync(moduleFile, generateModule(modelName, ext));
+  // ✅ Skip if files already exist
+  if (!fs.existsSync(controllerFile)) {
+    fs.writeFileSync(controllerFile, generateController(modelName, ext));
+  }
 
-  console.log(`✅ Generated ${ext.toUpperCase()} files for: ${modelName}`);
+  if (!fs.existsSync(serviceFile)) {
+    fs.writeFileSync(serviceFile, generateService(modelName, ext));
+  }
+
+  if (!fs.existsSync(moduleFile)) {
+    fs.writeFileSync(moduleFile, generateModule(modelName, ext));
+  }
+
+  console.log(`✅ Prepared files for: ${modelName}`);
 });
+
 
 function generateController(model: string, ext: string): string {
   const lcModel = model.toLowerCase();
   const importType = 'import';
   const exportSyntax = 'export class';
 
-  return `${importType} { Controller, Get, Post, Body, Param, Query, Put, Delete } from '@nestjs/common';
+  return `${importType} {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Put,
+  Delete,
+} from '@nestjs/common';
 ${importType} { ApiTags, ApiOperation } from '@nestjs/swagger';
-${importType} ${lcModel}Service from './${lcModel}.service';
+${importType} { ${model}Service } from './${lcModel}.service';
 ${importType} { Create${model}Dto } from './dto/create-${lcModel}.dto';
 ${importType} { Update${model}Dto } from './dto/update-${lcModel}.dto';
+${importType} { ${model}, Prisma } from '${START_ROUTE}generated/prisma';
+${importType} { SortOptions } from 'prisma-model-cli/services/db/types';
 
 @ApiTags('${model}')
 @Controller('${lcModel}s')
 ${exportSyntax} ${model}Controller {
-  constructor(private readonly service = ${lcModel}Service) {}
+  constructor(private readonly service: ${model}Service) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new ${model}' })
+  @ApiOperation({ summary: 'Create a new ${model}' , operationId: '${lcModel}_create' } )
   create(@Body() data: Create${model}Dto) {
     return this.service.create(data);
   }
 
   @Post('bulk')
-  @ApiOperation({ summary: 'Create multiple ${model}s' })
+  @ApiOperation({ summary: 'Create multiple ${model}s' , operationId: '${lcModel}_createMany' } )
   createMany(@Body() data: Create${model}Dto[]) {
     return this.service.createMany(data);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get paginated list of ${model}s' })
+  @ApiOperation({ summary: 'Get paginated list of ${model}s' , operationId: '${lcModel}_findAll' } )
   findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
-    @Query('where') where?: string,
-    @Query('sort') sort?: string,
-    @Query('include') include?: string,
-    @Query('select') select?: string
+    @Query('where') where?: Prisma.${model}WhereInput,
+    @Query('sort') sort?: SortOptions<${model}>[],
+    @Query('include') include?: Prisma.${model}Include,
+    @Query('select') select?: Prisma.${model}Select,
   ) {
     return this.service.findManyWithPagination({
-      where: where ? JSON.parse(where) : undefined,
-      sort: sort ? JSON.parse(sort) : undefined,
-      include: include ? JSON.parse(include) : undefined,
-      select: select ? JSON.parse(select) : undefined,
+      where: where ? where : undefined,
+      sort: sort ? sort : undefined,
+      include: include ? include : undefined,
+      select: select ? select : undefined,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -109,25 +133,25 @@ ${exportSyntax} ${model}Controller {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a single ${model} by ID' })
+  @ApiOperation({ summary: 'Get a single ${model} by ID', operationId: '${lcModel}_findOne' } )
   findOne(@Param('id') id: string) {
     return this.service.findById(id);
   }
 
   @Post('find-one')
-  @ApiOperation({ summary: 'Find one ${model} by custom where clause' })
+  @ApiOperation({ summary: 'Find one ${model} by custom where clause' , operationId: '${lcModel}_findOneCustom' } )
   findOneCustom(@Body() where: Record<string, unknown>) {
     return this.service.findOne(where);
   }
 
   @Post('find')
-  @ApiOperation({ summary: 'Find many ${model}s by custom query' })
+  @ApiOperation({ summary: 'Find many ${model}s by custom query', operationId: '${lcModel}_findMany' } )
   findMany(@Body() options: Record<string, unknown>) {
     return this.service.findMany(options);
   }
 
   @Post('upsert')
-  @ApiOperation({ summary: 'Upsert a ${model}' })
+  @ApiOperation({ summary: 'Upsert a ${model}' , operationId: '${lcModel}_upsert' } )
   upsert(@Body() body: {
     where: Record<string, unknown>;
     create: Create${model}Dto;
@@ -137,13 +161,13 @@ ${exportSyntax} ${model}Controller {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update a ${model} by ID' })
+  @ApiOperation({ summary: 'Update a ${model} by ID' , operationId: '${lcModel}_update' } )
   update(@Param('id') id: string, @Body() data: Update${model}Dto) {
     return this.service.updateById(id, data);
   }
 
   @Post('update-one')
-  @ApiOperation({ summary: 'Update one ${model} by custom where clause' })
+  @ApiOperation({ summary: 'Update one ${model} by custom where clause' , operationId: '${lcModel}_updateOne' } )
   updateOne(@Body() body: {
     where: Record<string, unknown>;
     data: Update${model}Dto;
@@ -152,7 +176,7 @@ ${exportSyntax} ${model}Controller {
   }
 
   @Post('update-many')
-  @ApiOperation({ summary: 'Update many ${model}s' })
+  @ApiOperation({ summary: 'Update many ${model}s' , operationId: '${lcModel}_updateMany' } )
   updateMany(@Body() body: {
     where: Record<string, unknown>;
     data: Update${model}Dto;
@@ -161,49 +185,49 @@ ${exportSyntax} ${model}Controller {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a ${model} by ID' })
+  @ApiOperation({ summary: 'Delete a ${model} by ID' , operationId: '${lcModel}_remove' } )
   remove(@Param('id') id: string) {
     return this.service.deleteById(id);
   }
 
   @Post('delete-one')
-  @ApiOperation({ summary: 'Delete one ${model} by custom where clause' })
+  @ApiOperation({ summary: 'Delete one ${model} by custom where clause', operationId: '${lcModel}_deleteOne' } )
   deleteOne(@Body() where: Record<string, unknown>) {
     return this.service.deleteOne(where);
   }
 
   @Post('delete-many')
-  @ApiOperation({ summary: 'Delete many ${model}s by filter' })
+  @ApiOperation({ summary: 'Delete many ${model}s by filter' , operationId: '${lcModel}_deleteMany' } )
   deleteMany(@Body() where: Record<string, unknown>) {
     return this.service.deleteMany(where);
   }
 
   @Post('count')
-  @ApiOperation({ summary: 'Count ${model}s matching a filter' })
+  @ApiOperation({ summary: 'Count ${model}s matching a filter' , operationId: '${lcModel}_count' } )
   count(@Body() where: Record<string, unknown>) {
     return this.service.count(where);
   }
 
   @Post('exists')
-  @ApiOperation({ summary: 'Check if ${model} exists by filter' })
+  @ApiOperation({ summary: 'Check if ${model} exists by filter' , operationId: '${lcModel}_exists' } )
   exists(@Body() where: Record<string, unknown>) {
     return this.service.exists(where);
   }
 
   @Post('filters')
-  @ApiOperation({ summary: 'Advanced filter for ${model}s' })
+  @ApiOperation({ summary: 'Advanced filter for ${model}s' , operationId: '${lcModel}_findWithFilters' } )
   findWithFilters(@Body() filters: Record<string, unknown>) {
     return this.service.findWithFilters(filters);
   }
 
   @Post('sql/execute')
-  @ApiOperation({ summary: 'Execute raw SQL (dangerous)' })
+  @ApiOperation({ summary: 'Execute raw SQL (dangerous)' , operationId: '${lcModel}_executeRaw' } )
   executeRaw(@Body() body: { query: string }) {
     return this.service.executeRaw(body.query);
   }
 
   @Post('sql/query')
-  @ApiOperation({ summary: 'Run raw SQL and return results' })
+  @ApiOperation({ summary: 'Run raw SQL and return results' , operationId: '${lcModel}_queryRaw' } )
   queryRaw(@Body() body: { query: string }) {
     return this.service.queryRaw(body.query);
   }
@@ -211,15 +235,13 @@ ${exportSyntax} ${model}Controller {
 `;
 }
 
-
-
 function generateService(model: string, ext: string): string {
   const lcModel = model.toLowerCase();
   const exportSyntax = ext === 'ts' ? 'export class' : 'class';
 
   return `import { Injectable } from '@nestjs/common';
 import { GenericPrismaService } from 'prisma-model-cli';
-import { Prisma, ${model} } from '../../generated/prisma';
+import { Prisma, ${model} } from '${START_ROUTE}generated/prisma';
 
 @Injectable()
 ${exportSyntax} ${model}Service extends GenericPrismaService<
@@ -231,11 +253,9 @@ ${exportSyntax} ${model}Service extends GenericPrismaService<
   constructor() {
     super('${lcModel}');
   }
+}`;
 }
 
-const ${lcModel}Service = new ${model}Service();
-export default ${lcModel}Service;`;
-}
 
 function generateModule(model: string, ext: string): string {
   const lcModel = model.toLowerCase();
@@ -305,24 +325,36 @@ function generateDtos(model: string, ext: string) {
   const lines = body
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('//') && !line.startsWith('@') && !line.startsWith('@@'));
+    .filter((line) => line && !line.startsWith('//') && !line.startsWith('@@'));
 
-  const relationMap: Record<string, string> = {};
   const requiredFields: Set<string> = new Set();
+  const relationMap: Record<string, string> = {};
+  const foreignKeyFields: Set<string> = new Set();
 
-  lines.forEach((line) => {
+  // First pass: detect relations and required fields
+  for (const line of lines) {
     const [name, , ...rest] = line.split(/\s+/);
-    if (line.includes('@relation')) relationMap[name] = line;
+
+    if (line.includes('@relation')) {
+      relationMap[name] = line;
+
+      // Extract fields = [...] from @relation
+      const fieldsMatch = line.match(/fields:\s*\[(.*?)\]/);
+      if (fieldsMatch) {
+        const fkFields = fieldsMatch[1].split(',').map((f) => f.trim());
+        fkFields.forEach((fk) => foreignKeyFields.add(fk));
+      }
+    }
+
     if (!line.includes('?')) requiredFields.add(name);
-  });
+  }
 
   const fieldLines = lines
     .map((line) => {
       const [name, typeRaw] = line.split(/\s+/);
 
-      // Skip scalar foreign keys (e.g., storeId)
-      if (name.endsWith('Id') && relationMap[name.replace(/Id$/, '')]) {
-        return null;
+      if (foreignKeyFields.has(name)) {
+        return null; // Skip foreign key scalars tied to a relation
       }
 
       const tsType = mapPrismaTypeToTs(name, model);
@@ -339,7 +371,7 @@ function generateDtos(model: string, ext: string) {
     .join('\n\n');
 
   const baseDto = `import { ApiProperty } from '@nestjs/swagger';
-import { Prisma } from '../../../generated/prisma';
+import { Prisma } from '${START_ROUTE}../generated/prisma';
 
 export class ${baseClass} {
 ${fieldLines}
@@ -361,4 +393,62 @@ export class ${updateClass} extends PartialType(${createClass}) {}
 }
 
 
+function generateAppModule(): void {
+  const modelsDir = path.join(OUTPUT_BASE);
+  const moduleNames: string[] = [];
+
+  const importLines: string[] = [];
+
+  fs.readdirSync(modelsDir).forEach((folder) => {
+    const modulePath = path.join(modelsDir, folder, `${folder}.module.${ext}`);
+    if (fs.existsSync(modulePath)) {
+      const moduleName = `${modelNames.find((m) => m.toLowerCase() === folder)}Module`;
+      moduleNames.push(moduleName);
+      importLines.push(`import { ${moduleName} } from './models/${folder}/${folder}.module';`);
+    }
+  });
+
+  const appModuleContent = `import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+${importLines.join('\n')}
+
+@Module({
+  imports: [
+    ${moduleNames.join(',\n    ')}
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
+`;
+
+  fs.writeFileSync(path.join('src', 'app.module.ts'), appModuleContent);
+  console.log('✅ AppModule updated with all model modules');
+}
+
+function capitalize(str: string): string {
+  return str
+    .replace(/([-_])/g, ' ')                  // convert kebab/snake case to space-separated
+    .replace(/([a-z])([A-Z])/g, '$1 $2')      // split camelCase boundaries
+    .split(/\s+/)                             // split by whitespace
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('');
+}
+
+
+generateAppModule();
+
+
+// Run ESLint fix in the output directory
+console.log('🧹 Running ESLint fix...');
+try {
+  execSync('npx eslint . --fix', {
+    stdio: 'inherit',
+    cwd: OUTPUT_BASE_SRC,
+  });
+  console.log('✅ ESLint fix completed');
+} catch (error) {
+  console.error('❌ ESLint fix failed:', error);
+}
 
