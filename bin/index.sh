@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.2.47"
+VERSION="1.2.48"
 
 # Determine absolute script path (even when symlinked)
 SOURCE="${BASH_SOURCE[0]}"

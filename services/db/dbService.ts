@@ -16,7 +16,7 @@ export class GenericPrismaService<
 
     // Get the delegate for the current model
     private get delegate(): Record<string, unknown> {
-        return (this.prisma as Record<string, unknown>)[this.modelName.toLowerCase()] as Record<string, unknown>;
+        return (this.prisma as unknown as Record<string, unknown>)[this.modelName.toLowerCase()] as Record<string, unknown>;
     }
 
     /**

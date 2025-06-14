@@ -71,6 +71,34 @@ modelNames.forEach((modelName) => {
 });
 
 
+function generateErrorDto(): void {
+  const errorDtoPath = path.join('src', 'common', 'dto');
+  const errorDtoFile = path.join(errorDtoPath, 'error-response.dto.ts');
+
+  if (!fs.existsSync(errorDtoFile)) {
+    fs.mkdirSync(errorDtoPath, { recursive: true });
+
+    const content = `import { ApiProperty } from '@nestjs/swagger';
+
+export class ErrorResponseDto {
+  @ApiProperty({ example: 400 })
+  statusCode: number;
+
+  @ApiProperty({ example: 'Bad Request' })
+  message: string;
+
+  @ApiProperty({ example: 'Invalid input data', required: false })
+  error?: string;
+}
+`;
+    fs.writeFileSync(errorDtoFile, content);
+    console.log('✅ ErrorResponseDto created at src/common/dto/error-response.dto.ts');
+  } else {
+    console.log('✅ ErrorResponseDto already exists');
+  }
+}
+
+
 function generateController(model: string, ext: string): string {
   const lcModel = model.toLowerCase();
   const importType = 'import';
@@ -136,7 +164,10 @@ ${exportSyntax} ${model}Controller {
   @Post()
   @ApiOperation({ summary: 'Create a new ${model}', operationId: '${lcModel}_create' })
   @ApiOkResponse({ description: '${model} created successfully', type: ${model}BaseDto })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   create(@Body() data: Create${model}Dto) {
     return this.service.create(data);
   }
@@ -144,7 +175,10 @@ ${exportSyntax} ${model}Controller {
   @Post('bulk')
   @ApiOperation({ summary: 'Create multiple ${model}s', operationId: '${lcModel}_createMany' })
   @ApiOkResponse({ description: '${model}s created successfully', type: [${model}BaseDto] })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   createMany(@Body() data: Create${model}Dto[]) {
     return this.service.createMany(data);
   }
@@ -152,7 +186,10 @@ ${exportSyntax} ${model}Controller {
   @Get()
   @ApiOperation({ summary: 'Get paginated list of ${model}s', operationId: '${lcModel}_findAll' })
   @ApiOkResponse({ description: 'List fetched successfully', type: Paginated${model}Response })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
@@ -176,7 +213,10 @@ ${exportSyntax} ${model}Controller {
   @Get(':id')
   @ApiOperation({ summary: 'Get a single ${model} by ID', operationId: '${lcModel}_findOne' })
   @ApiOkResponse({ description: '${model} fetched successfully', type: ${model}BaseDto })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   findOne(@Param('id') id: string) {
     return this.service.findById(id);
   }
@@ -184,7 +224,10 @@ ${exportSyntax} ${model}Controller {
   @Get('find-one')
   @ApiOperation({ summary: 'Find one ${model} by custom where clause', operationId: '${lcModel}_findOneCustom' })
   @ApiOkResponse({ description: 'Result fetched successfully', type: ${model}BaseDto })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   findOneCustom(@Query() where: Record<string, unknown>) {
     return this.service.findOne(where);
   }
@@ -192,7 +235,10 @@ ${exportSyntax} ${model}Controller {
   @Get('find')
   @ApiOperation({ summary: 'Find many ${model}s by custom query', operationId: '${lcModel}_findMany' })
   @ApiOkResponse({ description: 'Results fetched successfully', type: [${model}BaseDto] })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   findMany(@Query() options: Record<string, unknown>) {
     return this.service.findMany(options);
   }
@@ -200,7 +246,10 @@ ${exportSyntax} ${model}Controller {
   @Post('upsert')
   @ApiOperation({ summary: 'Upsert a ${model}', operationId: '${lcModel}_upsert' })
   @ApiOkResponse({ description: '${model} upserted successfully', type: ${model}BaseDto })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   upsert(@Body() body: {
     where: Record<string, unknown>;
     create: Create${model}Dto;
@@ -212,7 +261,10 @@ ${exportSyntax} ${model}Controller {
   @Put(':id')
   @ApiOperation({ summary: 'Update a ${model} by ID', operationId: '${lcModel}_update' })
   @ApiOkResponse({ description: '${model} updated successfully', type: ${model}BaseDto })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   update(@Param('id') id: string, @Body() data: Update${model}Dto) {
     return this.service.updateById(id, data);
   }
@@ -220,7 +272,10 @@ ${exportSyntax} ${model}Controller {
   @Post('update-one')
   @ApiOperation({ summary: 'Update one ${model} by custom where clause', operationId: '${lcModel}_updateOne' })
   @ApiOkResponse({ description: '${model} updated successfully', type: ${model}BaseDto })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   updateOne(@Body() body: {
     where: Record<string, unknown>;
     data: Update${model}Dto;
@@ -231,7 +286,10 @@ ${exportSyntax} ${model}Controller {
   @Post('update-many')
   @ApiOperation({ summary: 'Update many ${model}s', operationId: '${lcModel}_updateMany' })
   @ApiOkResponse({ description: '${model}s updated successfully', type: [${model}BaseDto] })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   updateMany(@Body() body: {
     where: Record<string, unknown>;
     data: Update${model}Dto;
@@ -242,7 +300,10 @@ ${exportSyntax} ${model}Controller {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a ${model} by ID', operationId: '${lcModel}_remove' })
   @ApiOkResponse({ description: '${model} deleted successfully', type: ${model}BaseDto })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   remove(@Param('id') id: string) {
     return this.service.deleteById(id);
   }
@@ -250,7 +311,10 @@ ${exportSyntax} ${model}Controller {
   @Post('delete-one')
   @ApiOperation({ summary: 'Delete one ${model} by custom where clause', operationId: '${lcModel}_deleteOne' })
   @ApiOkResponse({ description: '${model} deleted successfully', type: ${model}BaseDto })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   deleteOne(@Body() where: Record<string, unknown>) {
     return this.service.deleteOne(where);
   }
@@ -258,7 +322,10 @@ ${exportSyntax} ${model}Controller {
   @Post('delete-many')
   @ApiOperation({ summary: 'Delete many ${model}s by filter', operationId: '${lcModel}_deleteMany' })
   @ApiOkResponse({ description: '${model}s deleted successfully', type: [${model}BaseDto] })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   deleteMany(@Body() where: Record<string, unknown>) {
     return this.service.deleteMany(where);
   }
@@ -266,7 +333,10 @@ ${exportSyntax} ${model}Controller {
   @Post('count')
   @ApiOperation({ summary: 'Count ${model}s matching a filter', operationId: '${lcModel}_count' })
   @ApiOkResponse({ description: 'Count returned successfully', type: Number })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   count(@Body() where: Record<string, unknown>) {
     return this.service.count(where);
   }
@@ -274,7 +344,10 @@ ${exportSyntax} ${model}Controller {
   @Post('exists')
   @ApiOperation({ summary: 'Check if ${model} exists by filter', operationId: '${lcModel}_exists' })
   @ApiOkResponse({ description: 'Existence check returned successfully', type: Boolean })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   exists(@Body() where: Record<string, unknown>) {
     return this.service.exists(where);
   }
@@ -282,7 +355,10 @@ ${exportSyntax} ${model}Controller {
   @Post('filters')
   @ApiOperation({ summary: 'Advanced filter for ${model}s', operationId: '${lcModel}_findWithFilters' })
   @ApiOkResponse({ description: 'Filters applied successfully', type: [${model}BaseDto] })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   findWithFilters(@Body() filters: Record<string, unknown>) {
     return this.service.findWithFilters(filters);
   }
@@ -290,7 +366,10 @@ ${exportSyntax} ${model}Controller {
   @Post('sql/execute')
   @ApiOperation({ summary: 'Execute raw SQL (dangerous)', operationId: '${lcModel}_executeRaw' })
   @ApiOkResponse({ description: 'Query executed successfully', type: String })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   executeRaw(@Body() body: { query: string }) {
     return this.service.executeRaw(body.query);
   }
@@ -298,7 +377,10 @@ ${exportSyntax} ${model}Controller {
   @Post('sql/query')
   @ApiOperation({ summary: 'Run raw SQL and return results', operationId: '${lcModel}_queryRaw' })
   @ApiOkResponse({ description: 'Query result returned successfully', type: Object })
-  @ApiBadRequestResponse({ description: 'Bad request', type: String })
+  @ApiBadRequestResponse({ description: 'Bad Request', type: ErrorResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized', type: ErrorResponseDto })
+  @ApiForbiddenResponse({ description: 'Forbidden', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ description: 'Internal Server Error', type: ErrorResponseDto })
   queryRaw(@Body() body: { query: string }) {
     return this.service.queryRaw(body.query);
   }
@@ -613,6 +695,7 @@ function capitalize(str: string): string {
     .join('');
 }
 
+generateErrorDto();
 
 generateAppModule();
 
