@@ -119,7 +119,10 @@ ${importType} {
   ApiOperation,
   ApiOkResponse,
   ApiBadRequestResponse,
-  ApiProperty
+  ApiProperty,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+  ApiInternalServerErrorResponse
 } from '@nestjs/swagger';
 ${importType} { ${model}Service } from './${lcModel}.service';
 ${importType} { Create${model}Dto } from './dto/create-${lcModel}.dto';
@@ -127,6 +130,7 @@ ${importType} { Update${model}Dto } from './dto/update-${lcModel}.dto';
 ${importType} { ${model}, Prisma } from '${START_ROUTE}generated/prisma';
 ${importType} { ${model}BaseDto } from './dto/base-${lcModel}.dto';
 ${importType} { SortOptions } from 'prisma-model-cli/services/db/types';
+${importType} { ErrorResponseDto } from 'src/common/dto/error-response.dto';
 
 class ${model}PaginationMeta {
   @ApiProperty()
