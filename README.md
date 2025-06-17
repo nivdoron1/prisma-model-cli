@@ -5,7 +5,10 @@
 Supports:
 
 * ✅ NestJS (TypeScript)
+  - REST API
+  - GraphQL API
 * ✅ Express (TypeScript or JavaScript)
+* ✅ GraphQL (TypeScript or JavaScript)
 * ✅ TypeScript API Client via Swagger/OpenAPI
 
 ---
@@ -14,7 +17,7 @@ Supports:
 
 ```bash
 npm install -g prisma-model-cli
-````
+```
 
 install locally:
 
@@ -34,13 +37,35 @@ You can also use flags to skip the interactive dialog:
 
 ### ▶️ CLI Options
 
+#### NestJS Options
+| Command                                    | Description                                                |
+| ----------------------------------------- | ---------------------------------------------------------- |
+| `prismagen --nestjs`                      | Generate NestJS REST API structure (TypeScript)            |
+| `prismagen --nestjs --no-swagger`         | Generate NestJS REST API without Swagger setup             |
+| `prismagen --nestjs --graphql`            | Generate NestJS GraphQL API structure (TypeScript)         |
+| `prismagen --nestjs --graphql --no-swagger` | Generate NestJS GraphQL API without Swagger setup        |
+
+#### Express Options
 | Command                           | Description                                                |
 | --------------------------------- | ---------------------------------------------------------- |
-| `prismagen`                       | Launch interactive API structure dialog                    |
 | `prismagen --express`             | Generate Express API structure (TypeScript)                |
 | `prismagen --express --output-js` | Generate Express API structure (JavaScript)                |
-| `prismagen --nestjs`              | Generate NestJS API structure (TypeScript)                 |
-| `prismagen generate swagger`      | Generate NestJS structure and Swagger-based TypeScript SDK |
+
+#### GraphQL Options
+| Command                           | Description                                                |
+| --------------------------------- | ---------------------------------------------------------- |
+| `prismagen --graphql`             | Generate GraphQL API structure (TypeScript)                |
+| `prismagen --graphql --output-js` | Generate GraphQL API structure (JavaScript)                |
+
+#### Swagger/OpenAPI Options
+| Command                           | Description                                                |
+| --------------------------------- | ---------------------------------------------------------- |
+| `prismagen generate swagger`      | Generate NestJS REST + Swagger UI TypeScript client        |
+| `prismagen generate swagger --graphql` | Generate NestJS GraphQL + Swagger UI TypeScript client |
+
+#### General Options
+| Command                           | Description                                                |
+| --------------------------------- | ---------------------------------------------------------- |
 | `prismagen --help` or `-h`        | Show CLI help                                              |
 | `prismagen --version` or `-v`     | Show installed version                                     |
 
@@ -48,16 +73,7 @@ You can also use flags to skip the interactive dialog:
 
 ## 📁 Output Structure
 
-Depending on your schema, PrismaGen will create folders under `/models/<model-name>/` containing:
-
-* `controller.ts` / `controller.js`
-* `service.ts` / `service.js`
-* `dto/` (for NestJS only)
-* `routes/` (for Express)
-* `baseController`, `baseService`, and shared types
-
-Example:
-
+### NestJS REST API Structure
 ```
 models/
   └── user/
@@ -68,6 +84,38 @@ models/
       │   └── update-user.dto.ts
 ```
 
+### NestJS GraphQL API Structure
+```
+models/
+  └── user/
+      ├── user.resolver.ts
+      ├── user.service.ts
+      ├── dto/
+      │   ├── create-user.input.ts
+      │   └── update-user.input.ts
+      └── user.types.ts
+```
+
+### Express API Structure
+```
+models/
+  └── user/
+      ├── user.controller.ts
+      ├── user.service.ts
+      └── routes/
+          └── user.routes.ts
+```
+
+### GraphQL API Structure
+```
+models/
+  └── user/
+      ├── user.resolver.ts
+      ├── user.service.ts
+      ├── user.types.ts
+      └── user.inputs.ts
+```
+
 ---
 
 ## 🧬 Generate Swagger TypeScript Client
@@ -76,6 +124,11 @@ To generate a TypeScript SDK using `openapi-generator-cli` from your running Nes
 
 ```bash
 prismagen generate swagger
+```
+
+For GraphQL API:
+```bash
+prismagen generate swagger --graphql
 ```
 
 You'll be prompted to:

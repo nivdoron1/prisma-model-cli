@@ -1,6 +1,6 @@
 {
   "name": "prisma-model-cli",
-  "version": "1.2.5",
+  "version": "1.2.51",
   "description": "Generate service/controller/routes for Prisma models",
   "bin": {
     "prismagen": "./bin/index.sh"
