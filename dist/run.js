@@ -11,6 +11,53 @@ const START_ROUTE = '../../../';
 const SCHEMA_PATH = path_1.default.join('prisma/schema.prisma');
 const OUTPUT_BASE = path_1.default.join(process.cwd(), './src/models');
 const OUTPUT_BASE_SRC = path_1.default.join(process.cwd(), './src');
+function installDependencies() {
+    const packages = [
+        '@nestjs/common',
+        '@nestjs/swagger',
+        'prisma-model-cli',
+        '@prisma/client',
+        'eslint',
+        'prettier',
+        '@typescript-eslint/eslint-plugin',
+        '@typescript-eslint/parser',
+        'eslint-config-prettier',
+        'eslint-plugin-prettier',
+        'ts-node',
+        'typescript'
+    ];
+    const devFlags = [
+        '@typescript-eslint/eslint-plugin',
+        '@typescript-eslint/parser',
+        'eslint',
+        'prettier',
+        'eslint-config-prettier',
+        'eslint-plugin-prettier',
+        'ts-node',
+        'typescript'
+    ];
+    console.log('📦 Checking and installing required npm packages...\n');
+    packages.forEach((pkg) => {
+        try {
+            require.resolve(pkg);
+            console.log(`✅ ${pkg} is already installed`);
+        }
+        catch (_) {
+            const isDev = devFlags.includes(pkg);
+            const installCmd = `npm install ${pkg} ${isDev ? '--save-dev' : ''}`;
+            console.log(`📦 Installing ${pkg}...`);
+            try {
+                (0, child_process_1.execSync)(installCmd, { stdio: 'inherit' });
+            }
+            catch (err) {
+                console.error(`❌ Failed to install ${pkg}`);
+                process.exit(1);
+            }
+        }
+    });
+    console.log('✅ All dependencies are ready!\n');
+}
+installDependencies();
 if (!fs_1.default.existsSync(SCHEMA_PATH)) {
     console.error(`❌ schema.prisma not found at ${SCHEMA_PATH}`);
     process.exit(1);

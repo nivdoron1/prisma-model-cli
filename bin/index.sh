@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="1.2.49"
+VERSION="1.2.5"
 
 # Determine absolute script path (even when symlinked)
 SOURCE="${BASH_SOURCE[0]}"
@@ -19,11 +19,16 @@ function show_help {
   echo ""
   echo "Usage:"
   echo "  prismagen                           Launch interactive dialog to choose API structure"
-  echo "  prismagen --nestjs                  Generate NestJS structure (TypeScript)"
-  echo "  prismagen --nestjs --no-swagger     Skip Swagger setup in NestJS"
+  echo "  prismagen --nestjs                  Generate NestJS REST structure (TypeScript)"
+  echo "  prismagen --nestjs --no-swagger     Skip Swagger setup in NestJS REST"
+  echo "  prismagen --nestjs --graphql        Generate NestJS GraphQL structure (TypeScript)"
+  echo "  prismagen --nestjs --graphql --no-swagger  Skip Swagger setup in NestJS GraphQL"
   echo "  prismagen --express                 Generate Express structure (TypeScript)"
   echo "  prismagen --express --output-js     Generate Express structure (JavaScript)"
-  echo "  prismagen generate swagger          Generate NestJS + Swagger UI TypeScript client"
+  echo "  prismagen --graphql                 Generate GraphQL structure (TypeScript)"
+  echo "  prismagen --graphql --output-js     Generate GraphQL structure (JavaScript)"
+  echo "  prismagen generate swagger          Generate NestJS REST + Swagger UI TypeScript client"
+  echo "  prismagen generate swagger --graphql Generate NestJS GraphQL + Swagger UI TypeScript client"
   echo "  prismagen --help                    Show help"
   echo "  prismagen --version                 Show version"
   echo ""
@@ -54,25 +59,66 @@ function run_express {
   "$script" "$@"
 }
 
-function run_nestjs {
-  ensure_prisma_model_cli
-  local entry="$ROOT_DIR/dist/run.js"
-  if [ ! -f "$entry" ]; then
-    echo "❌ Compiled run.js not found at: $entry"
-    echo "💡 Run 'npm run build' in the CLI project first."
+function run_graphql {
+  if [[ " $@ " =~ " --no-swagger " ]]; then
+    echo "❌ The --no-swagger flag is not supported with --graphql"
     exit 1
   fi
-  node "$entry" "$@"
+
+  ensure_prisma_model_cli
+  local script="$ROOT_DIR/graphql-prisma-model-cli.sh"
+  if [ ! -f "$script" ]; then
+    echo "❌ Could not find $script"
+    exit 1
+  fi
+  chmod +x "$script"
+  "$script" "$@"
+}
+
+function run_nestjs {
+  ensure_prisma_model_cli
+  
+  # Check if --graphql flag is present
+  if [[ " $@ " =~ " --graphql " ]]; then
+    local entry="$ROOT_DIR/dist/graphql-run.js"
+    if [ ! -f "$entry" ]; then
+      echo "❌ Compiled graphql-run.js not found at: $entry"
+      echo "💡 Run 'npm run build' in the CLI project first."
+      exit 1
+    fi
+    echo "🚀 Using NestJS GraphQL generator..."
+    node "$entry" "$@"
+  else
+    local entry="$ROOT_DIR/dist/run.js"
+    if [ ! -f "$entry" ]; then
+      echo "❌ Compiled run.js not found at: $entry"
+      echo "💡 Run 'npm run build' in the CLI project first."
+      exit 1
+    fi
+    echo "📦 Using NestJS REST generator..."
+    node "$entry" "$@"
+  fi
 }
 
 function run_swagger_ui {
-  local swaggerScript="$ROOT_DIR/swagger-ui.sh"
-  if [ ! -f "$swaggerScript" ]; then
-    echo "❌ Could not find $swaggerScript"
-    exit 1
+  # Check if --graphql flag is present
+  if [[ " $@ " =~ " --graphql " ]]; then
+    local swaggerScript="$ROOT_DIR/swagger-graphql-ui.sh"
+    if [ ! -f "$swaggerScript" ]; then
+      echo "❌ Could not find $swaggerScript"
+      exit 1
+    fi
+    chmod +x "$swaggerScript"
+    "$swaggerScript"
+  else
+    local swaggerScript="$ROOT_DIR/swagger-ui.sh"
+    if [ ! -f "$swaggerScript" ]; then
+      echo "❌ Could not find $swaggerScript"
+      exit 1
+    fi
+    chmod +x "$swaggerScript"
+    "$swaggerScript"
   fi
-  chmod +x "$swaggerScript"
-  "$swaggerScript"
 }
 
 function show_dialog {
@@ -81,10 +127,13 @@ function show_dialog {
     --stdout \
     --ok-label "Select" \
     --cancel-label "Cancel" \
-    --menu "🚀 Choose your API structure:" 12 60 3 \
+    --menu "🚀 Choose your API structure:" 16 60 6 \
     1 "Node Express (TypeScript)" \
     2 "Node Express (JavaScript)" \
-    3 "NestJS")
+    3 "GraphQL (TypeScript)" \
+    4 "GraphQL (JavaScript)" \
+    5 "NestJS REST (TypeScript)" \
+    6 "NestJS GraphQL (TypeScript)")
 
   clear
 
@@ -103,8 +152,20 @@ function show_dialog {
       run_express --output-js
       ;;
     3)
-      echo "🏗️  Generating NestJS structure..."
+      echo "🚀 Running Prisma GraphQL CLI (TypeScript)..."
+      run_graphql
+      ;;
+    4)
+      echo "🚀 Running Prisma GraphQL CLI (JavaScript)..."
+      run_graphql --output-js
+      ;;
+    5)
+      echo "🏗️  Generating NestJS REST structure..."
       run_nestjs
+      ;;
+    6)
+      echo "🚀 Generating NestJS GraphQL structure..."
+      run_nestjs --graphql
       ;;
     *)
       echo "❌ Invalid selection."
@@ -125,11 +186,22 @@ case "$1" in
     shift
     run_express "$@"
     ;;
+  --graphql)
+    echo "🚀 Running Prisma GraphQL CLI..."
+    shift
+    run_graphql "$@"
+    ;;
   generate)
     if [[ "$2" == "swagger" ]]; then
-      echo "🛠️  Generating NestJS structure and Swagger UI client..."
-      run_nestjs
-      run_swagger_ui
+      if [[ "$3" == "--graphql" ]]; then
+        echo "🛠️  Generating NestJS GraphQL structure and Swagger UI client..."
+        run_nestjs --graphql
+        run_swagger_ui --graphql
+      else
+        echo "🛠️  Generating NestJS REST structure and Swagger UI client..."
+        run_nestjs
+        run_swagger_ui
+      fi
     else
       echo "❌ Unknown generate command: $2"
       exit 1

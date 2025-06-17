@@ -63,7 +63,7 @@ for model in $models; do
   if [ ! -f "$service_path" ]; then
     if [ "$EXT" == "js" ]; then
       echo "const { GenericPrismaService } = require('prisma-model-cli');
-const { Prisma } = require('${BASE_PATH}/generated/prisma');
+const { Prisma } = require('${BASE_PATH}generated/prisma');
 
 class ${model}Service extends GenericPrismaService {
   constructor() {
@@ -71,12 +71,12 @@ class ${model}Service extends GenericPrismaService {
   }
 }
 
-const ${lower_model}Service = new ${model}Service();
+const ${model}Service = new ${model}Service();
 
-module.exports = ${lower_model}Service;" > "$service_path"
+module.exports = ${model}Service;" > "$service_path"
     else
       echo "import { GenericPrismaService } from 'prisma-model-cli';
-import { Prisma, $model } from '../../generated/prisma';
+import { Prisma, $model } from '${BASE_PATH}generated/prisma';
 
 export class ${model}Service extends GenericPrismaService<
   $model,
@@ -102,19 +102,19 @@ export default ${lower_model}Service;" > "$service_path"
   controller_path="$model_folder/controller.$EXT"
   if [ ! -f "$controller_path" ]; then
     if [ "$EXT" == "js" ]; then
-      echo "const ${lower_model}Service = require('./service');
+      echo "const ${model}Service = require('./service');
 const { BaseController } = require('prisma-model-cli');
 
 class ${model}Controller extends BaseController {
   constructor() {
-    super(${lower_model}Service);
+    super(${model}Service);
   }
 }
 
 module.exports = new ${model}Controller();" > "$controller_path"
     else
-      echo "import { ${lower_model}Service } from './service';
-import { Prisma, $model } from '../../generated/prisma';
+      echo "import ${model}Service from './service';
+import { Prisma, $model } from '${BASE_PATH}generated/prisma';
 import { BaseController } from 'prisma-model-cli';
 
 class ${model}Controller extends BaseController<
@@ -124,7 +124,7 @@ class ${model}Controller extends BaseController<
   Prisma.${model}WhereInput
 > {
   constructor() {
-    super(${lower_model}Service);
+    super(${model}Service);
   }
 }
 
@@ -184,9 +184,9 @@ class ${model}s {
 
 module.exports = ${model}s;" > "$model_entry"
     else
-      echo "import { ${model}Service } from './service';
-import { ${model}Controller } from './controller';
-import { ${model}Routes } from './routes';
+      echo "import ${model}Service from './service';
+import ${model}Controller from './controller';
+import ${model}Routes from './routes';
 
 export default class ${model}s {
   public service = ${model}Service;
